@@ -1,0 +1,70 @@
+package DataDrivenTesting;
+
+import java.io.IOException;
+import java.time.Duration;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+public class LoanCalculator {
+
+	public static void main(String[] args) throws IOException, InterruptedException {
+		// TODO Auto-generated method stub
+
+		WebDriver driver = new ChromeDriver();
+		driver.get("https://www.calculator.net/payment-calculator.html");
+		driver.manage().window().maximize();
+		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
+		
+		String filepath=System.getProperty("user.dir")+"\\testdata\\caldata1.xlsx";
+		
+		int rows = ExcelUtils.getRowCount(filepath, "Sheet1");
+		
+		for(int r=1;r<=rows;r++)
+		{
+			String amt = ExcelUtils.getCellData(filepath,"Sheet1",r,0);
+			String term = ExcelUtils.getCellData(filepath,"Sheet1",r,1);
+			String roi = ExcelUtils.getCellData(filepath,"Sheet1",r,2);
+			String exp_total = ExcelUtils.getCellData(filepath,"Sheet1",r,3);
+			
+			WebElement amtele = driver.findElement(By.id("cloanamount"));
+			amtele.clear();
+			amtele.sendKeys(amt);
+			
+			WebElement termele = driver.findElement(By.id("cloanterm"));
+			termele.clear();
+			termele.sendKeys(term);
+			
+			WebElement roiele = driver.findElement(By.id("cinterestrate"));
+			roiele.clear();
+			roiele.sendKeys(roi);
+			
+			driver.findElement(By.name("x")).click();
+			
+			String text = driver.findElement(By.xpath("//div[@class='rightresult']/div[2]")).getText();
+			//System.out.println(text);
+			String act_total=text.substring(text.indexOf("pay ")+4,text.indexOf("every")-1);
+			//System.out.println(act_total+" "+exp_total);
+			Thread.sleep(2000);
+			
+			if(exp_total.equals(act_total))
+			{
+				System.out.println("Test Passed");
+				ExcelUtils.setCellData(filepath,"Sheet1",r,5,"Passed");
+				ExcelUtils.fillGreenColor(filepath,"Sheet1",r,5);
+			}
+			else
+			{
+				System.out.println("Test Failed");
+				ExcelUtils.setCellData(filepath,"Sheet1",r,5,"Failed");
+				ExcelUtils.fillRedColor(filepath,"Sheet1",r,5);
+			}
+			Thread.sleep(2000);
+		}
+	//driver.quit();	
+	}
+}
+
+
